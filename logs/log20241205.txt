@@ -1,0 +1,31 @@
+2024/12/05 13:34:22|db_exec_postgres.h|ExecFunction|ERROR:  error de sintaxis en o cerca de «from»
+LINE 1: SELECT public.fnlogAcciones('I',1,Message from client: test,...
+                                                  ^
+
+2024/12/05 13:36:45|db_exec_postgres.h|ExecFunction|ERROR:  error de sintaxis en o cerca de «del»
+LINE 1: SELECT public.fnlogAcciones('I',1,Message del client: test,c...
+                                                  ^
+
+2024/12/05 13:40:54|db_exec_postgres.h|ExecFunction|ERROR:  error de sintaxis en o cerca de «del»
+LINE 1: SELECT public.fnlogAcciones('I',1,Message del client: test,c...
+                                                  ^
+
+2024/12/05 13:42:23|db_exec_postgres.h|ExecFunction|ERROR:  no existe la función public.fnlogacciones(unknown, integer, unknown, unknown)
+LINE 1: SELECT public.fnlogAcciones('I',1,'Message del client: test'...
+               ^
+HINT:  Ninguna función coincide en el nombre y tipos de argumentos. Puede ser necesario agregar conversión explícita de tipos.
+
+2024/12/05 13:45:25|db_exec_postgres.h|ExecFunction|ERROR:  error de sintaxis en o cerca de «'fnlogAcciones'»
+LINE 1: SELECT public.'fnlogAcciones'('I',1,'Message del client: tes...
+                      ^
+
+2024/12/05 13:47:36|db_exec_postgres.h|ExecFunction|ERROR:  no existe la función public.fnlogacciones(unknown, integer, unknown, unknown)
+LINE 1: SELECT public.fnlogAcciones('I',1,'Message del client: test'...
+               ^
+HINT:  Ninguna función coincide en el nombre y tipos de argumentos. Puede ser necesario agregar conversión explícita de tipos.
+
+2024/12/05 13:50:30|db_exec_postgres.h|ExecFunction|ERROR:  no existe la función public.fnlogacciones(unknown, integer, unknown, unknown)
+LINE 1: SELECT public.fnlogAcciones('I',1,'Message del client: test'...
+               ^
+HINT:  Ninguna función coincide en el nombre y tipos de argumentos. Puede ser necesario agregar conversión explícita de tipos.
+

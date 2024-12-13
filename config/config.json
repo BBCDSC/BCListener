@@ -1,0 +1,22 @@
+{
+    "postgres": {
+        "db": "4DOl7E2K0k2eesyp2qQ1qA==",
+        "pass": "vJYRjisM6sibyaMllrncUQ==",
+        "puerto": "SVlGeCvtgPlIoDzHFucAYg==",
+        "servidor": "yOxztn7ff9kbTfi6dbcbqw==",
+        "user": "p6h98xDOvcjeq8vm9wd2Nw=="
+    },
+    "sala": "8W83HyTCpUws88JySKQGQA==",
+    "socketcentral": {
+        "intentos": "84VOeBJ1c7Z8O3yQOrEHYA==",
+        "puerto": "SVlGeCvtgPlIoDzHFucAYg==",
+        "servidor": "UM4UsSb62vbVP2P7wlIGuA==",
+        "status": 1,
+        "tiempo": "84VOeBJ1c7Z8O3yQOrEHYA=="
+    },
+    "socketlocal": {
+        "puerto": "AjRkmPtqal29v3JrOATmkw==",
+        "servidor": "nYbtJBVbh7nZ34OtoEIXiA=="
+    },
+    "version": "1.0"
+}
