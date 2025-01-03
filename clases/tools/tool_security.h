@@ -20,7 +20,7 @@
 #include <iomanip>
 #include <string>
 #include <vector>
-#include "clases/tools/tool_log.h"
+#include "tool_log.h"
 
 /**
  * @brief namespace Seguridad que agrupa las clases orientadas a la seguridad

@@ -1,0 +1,6 @@
+2025/01/03 09:24:36|db_exec_postgres.h|ExecFunction|ERROR:  function bcn.fnbigconnects(unknown, unknown) does not exist
+LINE 1: SELECT * FROM bcn.fnBigConnects('B', 'd8:3a:dd:f7:c7:af');
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+2025/01/03 09:24:36|bli  stener.cpp|func|basic_string::_M_construct null not valid

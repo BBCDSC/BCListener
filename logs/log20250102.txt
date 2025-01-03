@@ -1,0 +1,12 @@
+2025/01/02 12:21:47|db_exec_postgres.h|ExecFunction|ERROR:  function public.fnlogAcciones(unknown, integer, unknown, unknown) does not exist
+LINE 1: SELECT public."fnlogAcciones"('I',1,'Se inicia el servidor B...
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+2025/01/02 17:13:41|blistener.cpp|server|Servidor listener no puede enlazar!
+2025/01/02 17:13:44|blistener.cpp|server|Servidor listener no puede enlazar!
+2025/01/02 17:14:15|blistener.cpp|server|Servidor listener no puede enlazar!
+2025/01/02 17:51:27|blistener.cpp|server|Servidor listener no puede enlazar!
+2025/01/02 17:51:33|blistener.cpp|server|Servidor listener no puede enlazar!
+2025/01/02 17:52:01|blistener.cpp|server|Servidor listener no puede enlazar!
+2025/01/02 17:52:07|blistener.cpp|server|Servidor listener no puede enlazar!

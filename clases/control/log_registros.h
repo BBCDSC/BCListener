@@ -2,11 +2,11 @@
 #include <unistd.h>
 #include <list>
 #include <string>
-#include "clases/dbs/db_exec_postgres.h"
-#include "clases/tools/tool_log.h"
-#include "clases/tools/tool_security.h"
-#include "clases/objetos/bclogerrores.h"
-#include "clases/objetos/blogcacciones.h"
+#include "../dbs/db_exec_postgres.h"
+#include "../tools/tool_log.h"
+#include "../tools/tool_security.h"
+#include "../objetos/bclogerrores.h"
+#include "../objetos/blogcacciones.h"
 
 using namespace std;
 

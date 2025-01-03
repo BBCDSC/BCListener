@@ -11,14 +11,14 @@
  * @copyright Copyright (c) 2024
  * 
  */
-#include <clases/json.hpp>
-#include "clases/config/config_cons.h"
-#include "clases/objetos/bcSocket.h"
+#include "../json.hpp"
+#include "config_cons.h"
+#include "../objetos/bcSocket.h"
 #include <string>
 #include <fstream>
 #include <iostream>
-#include "clases/tools/tool_log.h"
-#include "clases/tools/tool_security.h"
+#include "../tools/tool_log.h"
+#include "../tools/tool_security.h"
 
 
 

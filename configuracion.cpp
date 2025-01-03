@@ -10,13 +10,13 @@
  */
 
 #include "clases/json.hpp"
-#include "clases/config_socket.h"
-#include "clases/tool_security.h"
-#include "clases/tool_log.h"
-#include "clases/tool_general.h"
-#include "clases/config_cons.h"
-#include "clases/config_postgres.h"
-#include "clases/config_sala.h"
+#include "clases/config/config_socket.h"
+#include "clases/tools/tool_security.h"
+#include "clases/tools/tool_log.h"
+#include "clases/tools/tool_general.h"
+#include "clases/config/config_cons.h"
+#include "clases/config/config_postgres.h"
+#include "clases/config/config_sala.h"
 #include <fstream>
 #include <iostream>
 #include <chrono>

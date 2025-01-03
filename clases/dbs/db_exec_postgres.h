@@ -13,12 +13,12 @@
 #include <iostream>
 #include "clases/postgresql/libpq-fe.h"
 #include <unistd.h>
-#include "clases/json.hpp"
-#include "clases/config/config_cons.h"
-#include "clases/config/config_postgres.h"
-#include "clases/objetos/bcParamPostgres.h"
-#include "clases/tools/tool_log.h"
-#include "clases/tools/tool_security.h"
+#include "../json.hpp"
+#include "../config/config_cons.h"
+#include "../config/config_postgres.h"
+#include "../objetos/bcParamPostgres.h"
+#include "../tools/tool_log.h"
+#include "../tools/tool_security.h"
 using namespace std;
 
 namespace BaseDatos

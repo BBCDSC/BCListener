@@ -4,7 +4,7 @@
 //----------------------------------------------------------------------------- 
 #include <iostream>
 //#include <mariadb/conncpp.hpp>
-#include "clases/tools/tool_log.h"
+#include "../tools/tool_log.h"
 
 namespace Configuracion
 {

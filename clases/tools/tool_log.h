@@ -17,7 +17,7 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
-#include "clases/config/config_cons.h"
+#include "../config/config_cons.h"
 
 using namespace std;
 

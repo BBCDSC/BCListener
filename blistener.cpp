@@ -18,7 +18,8 @@
 #include "clases/config/config_postgres.h"
 #include "clases/config/config_sala.h"
 #include "clases/control/mv_bconnects.h"
-#include "clases/control/log_registros.h"
+#include "clases/dbs/db_exec_postgres.h"
+//#include "clases/control/log_registros.h"
 
 
 using namespace std;
@@ -60,13 +61,36 @@ void server(struct sockaddr_in* server_addr, int& socketDesc, int puerto)
             cout << "Hubo un error en el sistema, checa el log. "<< endl;            
             return;
         }
-        int iResult = Logs::log::setAccionPG("Se inicia el servidor BListener para escucha","correcto",1);
+        //int iResult = Logs::log::setAccionPG("Se inicia el servidor BListener para escucha","correcto",1);
     }
     catch(const std::exception& e)
     {
         Seguridad::cLog::ErrorSistema("blistener.cpp","server", e.what());
         cout << "Hubo un error en el sistema, checa el log. "<< endl;
     }    
+}
+
+string SaveMac(const string& query)
+{
+    try{
+        BaseDatos::DBConnectPostgres oPostgres;
+        PGresult* result; 
+        string errorMessage;
+
+        result = oPostgres.ExecFunction(query);
+
+        // Verificamos si obtuvimos un resultado
+        if (!result) {
+             cout << "La consulta no retornó resultados" << endl;
+        }
+        return string(PQgetvalue(result, 0, 0));
+    }
+    catch(const std::exception& e) {
+        Seguridad::cLog::ErrorSistema("bli  stener.cpp","func", e.what());
+        cout << "Hubo un error en el sistema, checa el log. "<< endl;
+        return "";
+    }
+    
 }
 
 /**
@@ -90,20 +114,36 @@ void func(struct sockaddr_in* client_addr, int& new_sd)
         recv(new_sd, buffer, sizeof(buffer),0);
         //Desencripto la cadena 
         string respuesta = objEnc.Desencriptar(buffer);
+        cout<<"Recibe: "+ respuesta << endl;
         //Parseo la cadena
         datagrama = Herramientas::Generales::split(respuesta,"|");
         auto shilo = this_thread::get_id();
         stringstream ss;
         ss << shilo;
         string idhilo = ss.str();    
-        if(datagrama[0] == "PQ")
+        if(datagrama[0] == "CQ")
         {
+            string queryFunction = "SELECT * FROM bcn.\"fnBigConnects\"('B', NULL, '"+ datagrama[1]+"',  NULL)";
+            string idBC = SaveMac(queryFunction);
             cout << "Se registra la MAC: " + datagrama[1] + " con el thread: " + idhilo << endl;
-            iResult = Logs::log::setAccionPG("Se registra la MAC: " + datagrama[1] + " con el thread: " + idhilo ,"correcto",1);
+            string Datagrama = "CR|"+idBC;
+            cout << "Envia: "+Datagrama<< endl;
+            auto duration = std::chrono::system_clock::now();     
+                    
+            Datagrama = objEnc.Encriptar(Datagrama);
+            const char* sdata = Datagrama.c_str();
+            send(new_sd,sdata, strlen(sdata),0);
+            //iResult = Logs::log::setAccionPG("Se registra la MAC: " + datagrama[1] + " con el thread: " + idhilo ,"correcto",1);
         }    
         else
         {
-            iResult = Logs::log::setErrorPG("Error al intetar registrar MAC con el thread",1 );
+            //iResult = Logs::log::setErrorPG("Error al intetar registrar MAC con el thread",1 );
+            string Datagrama = "No conicide con ningun DataGrama";
+            auto duration = std::chrono::system_clock::now();               
+                    
+            Datagrama = objEnc.Encriptar(Datagrama);
+            const char* sdata = Datagrama.c_str();
+            send(new_sd,sdata, strlen(sdata),0);
             return;
         }
         //
@@ -117,12 +157,14 @@ void func(struct sockaddr_in* client_addr, int& new_sd)
     }
     catch(const std::exception& e)
     {
-        Seguridad::cLog::ErrorSistema("blistener.cpp","func", e.what());
+        Seguridad::cLog::ErrorSistema("bli  stener.cpp","func", e.what());
         cout << "Hubo un error en el sistema, checa el log. "<< endl;
     }
            
 }
 
+
+/*
 void EscuchaPrincipal(int ipuertoescu)
 {
     try
@@ -172,7 +214,7 @@ void EscuchaPrincipal(int ipuertoescu)
             //auto milliseconds = chrono::duration_cast<chrono::microseconds>(duration-now).count();                
             //cout << "Message from client: " << respuesta << "|" << milliseconds <<endl;
             cout << "Message from client: " << respuesta << "|" << respuesta.length() << endl;
-            int iResult = Logs::log::setAccionPG("Message from client: " + respuesta,"correcto",1);
+            //int iResult = Logs::log::setAccionPG("Message from client: " + respuesta,"correcto",1);
             string Datagrama = "PP|d8:3a:dd:f7:bb:2b|172.16.1.101|1|20000";
             auto duration = std::chrono::system_clock::now();
             auto milliseconds = chrono::duration_cast<chrono::milliseconds>(duration-now).count();                
@@ -193,11 +235,7 @@ void EscuchaPrincipal(int ipuertoescu)
     }
     
 }
-
-
-
-
-
+*/
 
 int main()
 {
