@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <chrono>
 #include <thread>
+#include <tuple>
 
 //Clases locales
 #include "clases/config/config_socket.h"
@@ -70,7 +71,7 @@ void server(struct sockaddr_in* server_addr, int& socketDesc, int puerto)
     }    
 }
 
-string SaveMac(const string& query)
+string saveMac(const string& query)
 {
     try{
         BaseDatos::DBConnectPostgres oPostgres;
@@ -93,6 +94,33 @@ string SaveMac(const string& query)
     
 }
 
+tuple<string, string, string>selectBalance(const string& query)
+{
+    try{
+        BaseDatos::DBConnectPostgres oPostgres;
+        PGresult* result; 
+        int filas;
+        int columnas;
+
+        result = oPostgres.ExecFunction(query);
+
+        cout << "id: "+ string(PQgetvalue(result,0,0)) << endl;
+        cout << "Tarjeta: "+ string(PQgetvalue(result,0,1)) << endl;
+        cout << "tipomoneda: "+ string(PQgetvalue(result,0,3)) << endl;
+        cout << "saldo: "+ string(PQgetvalue(result,0,4)) << endl;
+        // Verificamos si obtuvimos un resultado
+        if (!result) {
+             cout << "La consulta no retornó resultados" << endl;
+        }
+        return make_tuple(string(PQgetvalue(result,0,0)), string(PQgetvalue(result,0,1)), string(PQgetvalue(result,0,4)));
+    }
+    catch(const std::exception& e)
+    {
+        Seguridad::cLog::ErrorSistema("bli  stener.cpp","func", e.what());
+        cout << "Hubo un error en el sistema, checa el log. "<< endl;
+        return make_tuple("", "", "");
+    }
+}
 /**
  * @brief Función de escucha
  * 
@@ -105,7 +133,7 @@ void func(struct sockaddr_in* client_addr, int& new_sd)
     try
     {
 
-        char buffer[1024] = { 0 };
+        char buffer[1024] = { 0 }; //buffer lo que manda el conect
         int n = 0;;
         int iResult = 0;
         Seguridad::Aes3 objEnc;
@@ -120,21 +148,36 @@ void func(struct sockaddr_in* client_addr, int& new_sd)
         auto shilo = this_thread::get_id();
         stringstream ss;
         ss << shilo;
-        string idhilo = ss.str();    
+        string idhilo = ss.str();
         if(datagrama[0] == "CQ")
         {
             string queryFunction = "SELECT * FROM bcn.\"fnBigConnects\"('B', NULL, '"+ datagrama[1]+"',  NULL)";
-            string idBC = SaveMac(queryFunction);
+            string idBC = saveMac(queryFunction);
             cout << "Se registra la MAC: " + datagrama[1] + " con el thread: " + idhilo << endl;
             string Datagrama = "CR|"+idBC;
             cout << "Envia: "+Datagrama<< endl;
-            auto duration = std::chrono::system_clock::now();     
+            auto duration = std::chrono::system_clock::now();   
                     
             Datagrama = objEnc.Encriptar(Datagrama);
             const char* sdata = Datagrama.c_str();
-            send(new_sd,sdata, strlen(sdata),0);
+            send(new_sd,sdata, strlen(sdata),0); //preguntar que hace referencia el sero en el send
             //iResult = Logs::log::setAccionPG("Se registra la MAC: " + datagrama[1] + " con el thread: " + idhilo ,"correcto",1);
-        }    
+        }
+        if(datagrama[0] == "TQ")
+        {
+            //Se manda llamar la funcion sp.mvtarjetassaldos
+            string queryFunc = "SELECT * FROM sp.\"mvtarjetassaldos\"('CS','"+datagrama[2]+"', NULL, NULL, NULL)";
+            auto [idTarjeta, uIdTarjeta, saldo] = selectBalance(queryFunc);
+
+            string DatagramaEnvio = "TR|"+idTarjeta+"|"+uIdTarjeta+"|"+saldo;
+            cout << "Envia: "+DatagramaEnvio<< endl;
+            auto duration = std::chrono::system_clock::now();   
+                    
+            DatagramaEnvio = objEnc.Encriptar(DatagramaEnvio);
+            const char* sdata = DatagramaEnvio.c_str();
+            send(new_sd,sdata, strlen(sdata),0);
+            
+        }
         else
         {
             //iResult = Logs::log::setErrorPG("Error al intetar registrar MAC con el thread",1 );
