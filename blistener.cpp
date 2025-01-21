@@ -87,12 +87,29 @@ string saveMac(const string& query)
         return string(PQgetvalue(result, 0, 0));
     }
     catch(const std::exception& e) {
-        Seguridad::cLog::ErrorSistema("bli  stener.cpp","func", e.what());
+        Seguridad::cLog::ErrorSistema("blistener.cpp","saveMac", e.what());
         cout << "Hubo un error en el sistema, checa el log. "<< endl;
         return "";
     }
-    
 }
+
+string updateSaldo(const string& query){
+        BaseDatos::DBConnectPostgres oPostgres;
+        PGresult* result; 
+        string errorMessage;
+
+        result = oPostgres.ExecFunction(query);
+
+        // Verificamos si obtuvimos un resultado
+        if (result!=NULL) {
+             return "1";
+        } else {
+            cout << "La consulta no retornó resultados" << endl;
+             return "0";
+        }
+        
+    }
+
 
 tuple<string, string, string>selectBalance(const string& query)
 {
@@ -116,11 +133,94 @@ tuple<string, string, string>selectBalance(const string& query)
     }
     catch(const std::exception& e)
     {
-        Seguridad::cLog::ErrorSistema("bli  stener.cpp","func", e.what());
+        Seguridad::cLog::ErrorSistema("blistener.cpp","selectBalance", e.what());
         cout << "Hubo un error en el sistema, checa el log. "<< endl;
         return make_tuple("", "", "");
     }
 }
+
+void registerLogAction(const string& query)
+{
+     try{
+        BaseDatos::DBConnectPostgres oPostgres;
+        PGresult* result; 
+
+        oPostgres.ExecFunction(query);
+        // Verificamos si obtuvimos un resultado
+        if (!result) {
+             cout << "La consulta no retornó resultados" << endl;
+        }
+    }
+    catch(const std::exception& e)
+    {
+        Seguridad::cLog::ErrorSistema("blistener.cpp","registerLogAction", e.what());
+        cout << "Hubo un error en el sistema, checa el log. "<< endl;
+    }
+}
+
+void evalua(vector<string> datagrama, int& new_sd){
+    auto shilo = this_thread::get_id();
+    stringstream ss;
+    ss << shilo;
+    string idhilo = ss.str();
+    Seguridad::Aes3 objEnc;
+    
+    if(datagrama[0] == "CQ") {
+        string queryFunction = "SELECT * FROM bcn.\"fnBigConnects\"('B', NULL, '"+ datagrama[1]+"',  NULL)";
+        string idBC = saveMac(queryFunction);
+        cout << "Se registra la MAC: " + datagrama[1] + " con el thread: " + idhilo << endl;
+        string Datagrama = "CR|"+idBC;
+        cout << "Envia: "+Datagrama<< endl;
+        auto duration = std::chrono::system_clock::now();
+        
+        Datagrama = objEnc.Encriptar(Datagrama);
+        const char* sdata = Datagrama.c_str();
+        string queryFunction = "SELECT * FROM sp.\"logsacciones\"('I', 100, 'Bconect se conecto con el lisener', 'Resultado Correcto', 4)";
+        registerLogAction(queryFunction);
+        send(new_sd,sdata, strlen(sdata),0); //preguntar que hace referencia el sero en el send
+        //iResult = Logs::log::setAccionPG("Se registra la MAC: " + datagrama[1] + " con el thread: " + idhilo ,"correcto",1);
+    } else if(datagrama[0] == "TQ") {
+        //Se manda llamar la funcion sp.mvtarjetassaldos
+        string queryFunc = "SELECT * FROM sp.\"mvtarjetassaldos\"('CS','"+datagrama[2]+"', NULL, NULL, NULL)";
+        auto [idTarjeta, uIdTarjeta, saldo] = selectBalance(queryFunc);
+
+        //string DatagramaEnvio = "TR|"+idTarjeta+"|"+uIdTarjeta+"|"+saldo;
+        string DatagramaEnvio = "TR|"+datagrama[1]+"|"+uIdTarjeta+"|"+saldo;
+        cout << "Envia: "+DatagramaEnvio<< endl;
+        auto duration = std::chrono::system_clock::now();   
+                    
+        DatagramaEnvio = objEnc.Encriptar(DatagramaEnvio);
+        string queryFunction = "SELECT * FROM sp.\"logsacciones\"('I', 1, 'Se consulta el sado una tarjeta de juego', 'Saldo en tarjeta: '"+saldo+", 4)";
+        registerLogAction(queryFunction);
+
+        const char* sdata = DatagramaEnvio.c_str();
+        send(new_sd,sdata, strlen(sdata),0);
+    } else if(datagrama[0] == "SQ") {
+        //Actualizamos el saldo que nos regresa el conect
+        string queryFunc = "SELECT sp.\"mvtarjetassaldos\"('A'::character varying,'"+datagrama[2]+
+        "'::character varying, NULL::integer,"+ datagrama[3] +"::smallint, "+ datagrama[4] +"::numeric)";
+        
+        string response = updateSaldo(queryFunc);
+
+        string DatagramaSaldo = "SR|" + response;
+        cout << "Envia: "+DatagramaSaldo<< endl;
+        auto duration = std::chrono::system_clock::now();   
+                    
+        DatagramaSaldo = objEnc.Encriptar(DatagramaSaldo);
+        const char* sdata = DatagramaSaldo.c_str();
+        send(new_sd,sdata, strlen(sdata),0);
+    } else {
+        //iResult = Logs::log::setErrorPG("Error al intetar registrar MAC con el thread",1 );
+        string Datagrama = "No conicide con ningun DataGrama";
+        auto duration = std::chrono::system_clock::now();               
+                    
+        Datagrama = objEnc.Encriptar(Datagrama);
+        const char* sdata = Datagrama.c_str();
+        send(new_sd,sdata, strlen(sdata),0);
+        return;
+    }
+}
+
 /**
  * @brief Función de escucha
  * 
@@ -129,12 +229,10 @@ tuple<string, string, string>selectBalance(const string& query)
  */
 void func(struct sockaddr_in* client_addr, int& new_sd)
 {
-
     try
     {
-
         char buffer[1024] = { 0 }; //buffer lo que manda el conect
-        int n = 0;;
+        int n = 0;
         int iResult = 0;
         Seguridad::Aes3 objEnc;
         vector<string> datagrama; 
@@ -145,62 +243,27 @@ void func(struct sockaddr_in* client_addr, int& new_sd)
         cout<<"Recibe: "+ respuesta << endl;
         //Parseo la cadena
         datagrama = Herramientas::Generales::split(respuesta,"|");
-        auto shilo = this_thread::get_id();
-        stringstream ss;
-        ss << shilo;
-        string idhilo = ss.str();
-        if(datagrama[0] == "CQ")
-        {
-            string queryFunction = "SELECT * FROM bcn.\"fnBigConnects\"('B', NULL, '"+ datagrama[1]+"',  NULL)";
-            string idBC = saveMac(queryFunction);
-            cout << "Se registra la MAC: " + datagrama[1] + " con el thread: " + idhilo << endl;
-            string Datagrama = "CR|"+idBC;
-            cout << "Envia: "+Datagrama<< endl;
-            auto duration = std::chrono::system_clock::now();   
-                    
-            Datagrama = objEnc.Encriptar(Datagrama);
-            const char* sdata = Datagrama.c_str();
-            send(new_sd,sdata, strlen(sdata),0); //preguntar que hace referencia el sero en el send
-            //iResult = Logs::log::setAccionPG("Se registra la MAC: " + datagrama[1] + " con el thread: " + idhilo ,"correcto",1);
-        }
-        if(datagrama[0] == "TQ")
-        {
-            //Se manda llamar la funcion sp.mvtarjetassaldos
-            string queryFunc = "SELECT * FROM sp.\"mvtarjetassaldos\"('CS','"+datagrama[2]+"', NULL, NULL, NULL)";
-            auto [idTarjeta, uIdTarjeta, saldo] = selectBalance(queryFunc);
 
-            string DatagramaEnvio = "TR|"+idTarjeta+"|"+uIdTarjeta+"|"+saldo;
-            cout << "Envia: "+DatagramaEnvio<< endl;
-            auto duration = std::chrono::system_clock::now();   
-                    
-            DatagramaEnvio = objEnc.Encriptar(DatagramaEnvio);
-            const char* sdata = DatagramaEnvio.c_str();
-            send(new_sd,sdata, strlen(sdata),0);
-            
-        }
-        else
-        {
-            //iResult = Logs::log::setErrorPG("Error al intetar registrar MAC con el thread",1 );
-            string Datagrama = "No conicide con ningun DataGrama";
-            auto duration = std::chrono::system_clock::now();               
-                    
-            Datagrama = objEnc.Encriptar(Datagrama);
-            const char* sdata = Datagrama.c_str();
-            send(new_sd,sdata, strlen(sdata),0);
-            return;
-        }
-        //
+        evalua(datagrama, new_sd);
 
         while ((n = recv(new_sd, buffer, sizeof(buffer), 0)))
         {
             cout << "Current Thread ID " << this_thread::get_id() << endl;
-            cout << buffer << endl;
+
+            string respuesta = objEnc.Desencriptar(string(buffer, n));
+            cout<<"Recibe: "+ respuesta << endl;
+            //Parseo la cadena
+            datagrama = Herramientas::Generales::split(respuesta,"|");
+            cout << respuesta << endl;
+
+            evalua(datagrama, new_sd);
         }
 
+        
     }
     catch(const std::exception& e)
     {
-        Seguridad::cLog::ErrorSistema("bli  stener.cpp","func", e.what());
+        Seguridad::cLog::ErrorSistema("blistener.cpp","func", e.what());
         cout << "Hubo un error en el sistema, checa el log. "<< endl;
     }
            
