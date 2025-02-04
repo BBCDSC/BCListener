@@ -213,6 +213,44 @@ int setDBLocal()
     return ireturn;    
 }
 
+int setDBCentral()
+{
+    int ireturn = 0;
+    string vserv, vdb,vuser,vpass,vport;
+    try
+    {
+        cout << "" << endl;
+        cout << "TODOS LOS CAMPOS SON OBLIGATORIOS" << endl;
+        cout << "Ingresa el servidor: ";
+        cin >> vserv;
+        cout << "Ingresa el puerto: ";
+        cin >> vport;
+        cout << "Ingresa la base de datos: ";
+        cin >> vdb;
+        cout << "Ingresa usuario: ";
+        cin >> vuser;
+        cout << "Ingresa password: ";
+        cin >> vpass;
+        int isave = Configuracion::Postgresql::SetParamsCentral(vserv,vport,vdb,vuser,vpass);
+        if(isave == 1)
+        {
+            cout << "" << endl;
+            cout << "Los datos se guerdaron correctamente. "<< endl;         
+        }
+        else{
+            cout << "" << endl;
+            cout << "Hubo un error en el sistema, checa el log. "<< endl;   
+        }              
+    }
+    catch(const std::exception& e)
+    {
+        Seguridad::cLog::ErrorSistema("configuracion.cpp","setDBLocal", e.what());
+        cout << "Hubo un error en el sistema, checa el log. "<< endl;
+        ireturn -1;
+    }
+    return ireturn;    
+}
+
 
 int main()
 {
@@ -232,8 +270,9 @@ int main()
             cout << "1) Sala." << endl;
             cout << "2) Socket Listener." << endl;
             cout << "3) Base de datos local." << endl;
-            cout << "4) Socket Servidor Central." << endl;
-            cout << "5) Salir." << endl;
+            cout << "4) Base de datos central." << endl;
+            cout << "5) Socket Servidor Central." << endl;
+            cout << "6) Salir." << endl;
             cout << "*****************************" << endl;
             cout << "" << endl;
             cout << "Selecciona una opción: ";
@@ -241,7 +280,7 @@ int main()
             cout << "" << endl;
             cout << "Seleccionaste: " << entrada << endl;
 
-            if(entrada != "1" && entrada != "2" && entrada != "3" && entrada != "4" && entrada != "5")
+            if(entrada != "1" && entrada != "2" && entrada != "3" && entrada != "4" && entrada != "5" && entrada != "6")
             {   
                 cout << " " << entrada << " no es una opción valida!! " << endl;
                 cout << "" << endl;
@@ -261,9 +300,12 @@ int main()
                         setDBLocal();
                         break;
                     case 4:
+                        setDBCentral();
+                        break;
+                    case 5:
                         setSocketCentral();
                         break;                        
-                    case 5:
+                    case 6:
                         bSalir = 0;
                         exit(0);
                     break;
