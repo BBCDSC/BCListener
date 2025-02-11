@@ -92,7 +92,7 @@ namespace BaseDatos
                         Seguridad::cLog::ErrorSistema("db_exec_postgres.h","ExecFunction", PQerrorMessage(conn));
                         result = NULL;                    
                     }
-                    PQfinish(cnn);
+                    PQfinish(conn);
                 }
                 catch(const std::exception& e)
                 {

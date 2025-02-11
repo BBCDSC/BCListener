@@ -30,6 +30,11 @@ namespace Objetos
              */
             string MAC = "";
             /**
+             * @brief string status
+             * 
+            */
+            string status = "";
+            /**
              * @brief int iSocket
              * 
              */

@@ -22,6 +22,7 @@
 #include "../config/config_postgres.h"
 #include "../objetos/bcParamPostgres.h"
 #include "../dbs/db_exec_postgres.h"
+#include "../dbs/db_exec_sql.h"
 #include "../tools/tool_log.h"
 #include "../tools/tool_security.h"
 using namespace std;
@@ -33,7 +34,7 @@ using namespace std;
 namespace Transacciones
 {
     /**
-     * @brief Clase para controlar las transacciones de velidacion del BConnect
+     * @brief Clase para controlar las transacciones de validacion del BConnect
      * 
      */
     class MvBConnects
@@ -50,20 +51,22 @@ namespace Transacciones
              * @param macaddress 
              * @return Objetos::bConnect 
              */
-            static Objetos::bConnect Nuevo(string macaddress){
+            static Objetos::bConnect Nuevo(int idBigConect,string macaddress, int status){
                 BaseDatos::DBConnectPostgres oPostgres;
                 PGresult *resultado;
                 Objetos::bConnect bconect;
                 int rows = 0;
                 resultado = NULL;
                 try{
-                    resultado = oPostgres.ExecFunction("SELECT public.fncatbconnetcs('I'," + macaddress+ ",0)");
+                    resultado = oPostgres.ExecFunction("SELECT * FROM bcn.\"fnBigConnects\"('I', cast("+to_string(idBigConect)+" as smallint),'"+macaddress+"', cast("+to_string(status)+" as smallint))");
                     if (resultado != NULL) {
                         rows = PQntuples(resultado);
                         if(rows == 1)
                         {
                             bconect.IdBConnect = atoi(PQgetvalue(resultado,0,0));
-                            bconect.iSocket = atoi(PQgetvalue(resultado,0,2));
+                            bconect.MAC = PQgetvalue(resultado,0,1);
+                            bconect.IdStatus = atoi(PQgetvalue(resultado,0,2));
+                            bconect.status = PQgetvalue(resultado,0,3);
                         }
                     }
                 }
@@ -76,26 +79,30 @@ namespace Transacciones
 
                 return bconect;
             }
+
             /**
-             * @brief Valida si la BConnect está dada de alta sino la inserta con status pendiente de autorizar
+             * @brief Valida si la BConnect está dada de alta en la sala
              * 
              * @param macaddress 
              * @return Objetos::bConnect 
              */
-            static Objetos::bConnect Validacion(string macaddress){
+            static Objetos::bConnect ValidacionLocal(string macaddress){
                 BaseDatos::DBConnectPostgres oPostgres;
                 PGresult *resultado;
                 Objetos::bConnect bconect;
                 int rows = 0;
                 resultado = NULL;                
                 try{
-                    resultado = oPostgres.ExecFunction("SELECT public.fncatbconnetcs('B'," + macaddress+ ",0)");
+                    cout << "MAC : "+ macaddress << endl;
+                    resultado = oPostgres.ExecFunction("SELECT * FROM bcn.\"fnBigConnects\"('CM', cast(0 as smallint), '"+macaddress+"')");
                     if (resultado != NULL) {
                         rows = PQntuples(resultado);
                         if(rows == 1)
                         {
                             bconect.IdBConnect = atoi(PQgetvalue(resultado,0,0));
-                            bconect.iSocket = atoi(PQgetvalue(resultado,0,2));
+                            bconect.MAC = PQgetvalue(resultado,0,1);
+                            bconect.IdStatus = atoi(PQgetvalue(resultado,0,2));
+                            bconect.status = PQgetvalue(resultado,0,3);
                         }
                     }
                 }
@@ -116,20 +123,23 @@ namespace Transacciones
              * @param status 
              * @return Objetos::bConnect 
              */
-            static Objetos::bConnect CambioStatus(string macaddress, int status){
+            static Objetos::bConnect CambioStatus(Objetos::bConnect Bc, int status){
                 BaseDatos::DBConnectPostgres oPostgres;
                 PGresult *resultado;
                 Objetos::bConnect bconect;
                 int rows = 0;          
                 resultado = NULL;
-                try{
-                    resultado = oPostgres.ExecFunction("SELECT public.fncatbconnetcs('CS'," + macaddress+ "," + to_string(status) +")");
+                try{ 
+                    cout<<"QUERY: SELECT bcn.\"fnBigConnects\"('AS', cast("+to_string(Bc.IdBConnect)+" as smallint), '"+Bc.MAC+"', cast("+to_string(status)+" as smallint))"<<endl;
+                    resultado = oPostgres.ExecFunction("SELECT * FROM bcn.\"fnBigConnects\"('AS', cast("+to_string(Bc.IdBConnect)+" as smallint), '"+Bc.MAC+"', cast("+to_string(status)+" as smallint))");
                     if (resultado != NULL) {
                         rows = PQntuples(resultado);
                         if(rows == 1)
                         {
                             bconect.IdBConnect = atoi(PQgetvalue(resultado,0,0));
-                            bconect.iSocket = atoi(PQgetvalue(resultado,0,2));
+                            bconect.MAC = PQgetvalue(resultado,0,1);
+                            bconect.IdStatus = atoi(PQgetvalue(resultado,0,2));
+                            bconect.status = PQgetvalue(resultado,0,3);
                         }
                     }
                 }
@@ -143,6 +153,42 @@ namespace Transacciones
                 return bconect;
             }
 
+            /**
+             * @brief Valida si la BConnect está dada de alta en central y a que sala pertenece.
+             * @param macaddress
+             * @param Idsala
+            */
+            static pair<int, int> ValidacionCentral(vector<string> params){
+                cout << "Entra en la validacionCentral" << endl;
+                BaseDatos::DBConnectSQL dbConnect;
+                int res = 0;
+                int idBConect = 0;
+                
+                try{
+                   auto [resSP, result, idBigConect] = dbConnect.ExecStoredProcedure("spbcn.ValidaBigConnects", params);
+                    // Verificar el resultado de la ejecución
+                    res = result;
+                    idBConect = idBigConect;
+                    if (resSP == SQL_SUCCESS || resSP == SQL_SUCCESS_WITH_INFO)
+                    {
+                        cout << "El SP se ejecuto de manera correcta" << endl;
+                    }
+                    else
+                    {
+                        cout << "Error al ejecutar el stored procedure." << endl;
+                    }
+
+                    // Cerrar la conexión con la base de datos
+                    dbConnect.CloseConnection();
+                }
+                catch(const std::exception& e){
+                    std::cout << "Error en la ValidacionCentral." << std::endl;
+                    Seguridad::cLog::ErrorSistema("mv_bconnects.h","ValidacionCentral", e.what());
+                    dbConnect.CloseConnection();
+                }  
+
+                return {res, idBConect};
+            }
 
     };
 

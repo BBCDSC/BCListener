@@ -16,6 +16,7 @@
 #include "clases/tools/tool_general.h"
 #include "clases/config/config_cons.h"
 #include "clases/config/config_postgres.h"
+#include "clases/config/config_sql.h"
 #include "clases/config/config_sala.h"
 #include <fstream>
 #include <iostream>
@@ -231,7 +232,7 @@ int setDBCentral()
         cin >> vuser;
         cout << "Ingresa password: ";
         cin >> vpass;
-        int isave = Configuracion::Postgresql::SetParamsCentral(vserv,vport,vdb,vuser,vpass);
+        int isave = Configuracion::Sqlserver::SetParams(vserv,vport,vdb,vuser,vpass);
         if(isave == 1)
         {
             cout << "" << endl;

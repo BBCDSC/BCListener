@@ -39,7 +39,7 @@ namespace Logs
                 int ireturn = 0;            
                 try
                 {
-                    string sSQL = "SELECT public.\"fnlogAcciones\"('I'," + to_string(icategoria) +",'"+ accion.c_str()  + "','"+ resultado.c_str() + "')";
+                    string sSQL = "SELECT * FROM sp.\"logsacciones\"('I', 0, CAST("+to_string(icategoria)+" AS SMALLINT),'"+accion+"','"+resultado+"', CAST(4 AS SMALLINT))";
                     pgresultado = oPostgres.ExecFunction(sSQL);
                     if (pgresultado != NULL) {
                         rows = PQntuples(pgresultado);
@@ -73,7 +73,7 @@ namespace Logs
                 int ireturn = 0;               
                 try
                 {
-                    string sSQL ="SELECT public.\"fnlogAcciones\"('I'," + to_string(ierror) +",'"+ accion + "')";
+                    string sSQL ="SELECT * FROM sp.\"logserrores\"('I', 0, CAST("+to_string(ierror)+" AS SMALLINT),'"+accion+"',CAST(4 AS SMALLINT))";
                     pgresultado = oPostgres.ExecFunction(sSQL);
                     if (pgresultado != NULL) {
                         rows = PQntuples(pgresultado);
