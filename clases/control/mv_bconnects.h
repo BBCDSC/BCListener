@@ -130,7 +130,7 @@ namespace Transacciones
                 int rows = 0;          
                 resultado = NULL;
                 try{ 
-                    cout<<"QUERY: SELECT bcn.\"fnBigConnects\"('AS', cast("+to_string(Bc.IdBConnect)+" as smallint), '"+Bc.MAC+"', cast("+to_string(status)+" as smallint))"<<endl;
+                    cout<<"QUERY: SELECT * FROM bcn.\"fnBigConnects\"('AS', cast("+to_string(Bc.IdBConnect)+" as smallint), '"+Bc.MAC+"', cast("+to_string(status)+" as smallint))"<<endl;
                     resultado = oPostgres.ExecFunction("SELECT * FROM bcn.\"fnBigConnects\"('AS', cast("+to_string(Bc.IdBConnect)+" as smallint), '"+Bc.MAC+"', cast("+to_string(status)+" as smallint))");
                     if (resultado != NULL) {
                         rows = PQntuples(resultado);
